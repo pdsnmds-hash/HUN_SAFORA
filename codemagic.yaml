@@ -1,41 +1,41 @@
-# ONE-TIME custom workflow for a NEW key, not an ordinary app build.
-# Copy to repository-root codemagic.yaml ONLY when new key creation is intended.
-# Before running: create secret group safora_key_generation with both passwords.
+# Copy this file to codemagic.yaml in the repository root.
+# Also commit docs/codemagic/prepare_signing.py and verify_aab.py.
 workflows:
-  safora-create-upload-key-once:
-    name: Safora - ONE-TIME create upload key
+  safora-aab:
+    name: Safora - Signed AAB
     instance_type: linux_x2
-    max_build_duration: 15
+    max_build_duration: 60
     environment:
       java: 17
-      groups:
-        - safora_key_generation
-      vars:
-        KEYSTORE_NAME: safora-upload.jks
-        UPLOAD_KEY_ALIAS: upload
-        KEY_SUBJECT: "CN=Safora Hungary Kft., OU=Android, O=Safora Hungary Kft., L=Lajosmizse, C=HU"
+      android_signing:
+        - safora_upload
     scripts:
-      - name: Generate key and export public certificate
+      - name: Configure Android SDK 36
         script: |
           set -eu
-          : "${NEW_KEYSTORE_PASSWORD:?Set the secret NEW_KEYSTORE_PASSWORD}"
-          : "${NEW_KEY_PASSWORD:?Set the secret NEW_KEY_PASSWORD}"
-          umask 077
           cd "$CM_BUILD_DIR"
-          mkdir -p generated-signing
-          test ! -e "generated-signing/$KEYSTORE_NAME"
-          keytool -genkeypair -noprompt \
-            -keystore "generated-signing/$KEYSTORE_NAME" \
-            -storetype JKS -keyalg RSA -keysize 4096 \
-            -validity 10000 -sigalg SHA256withRSA \
-            -alias "$UPLOAD_KEY_ALIAS" -dname "$KEY_SUBJECT" \
-            -storepass:env NEW_KEYSTORE_PASSWORD \
-            -keypass:env NEW_KEY_PASSWORD
-          keytool -exportcert -rfc \
-            -keystore "generated-signing/$KEYSTORE_NAME" \
-            -alias "$UPLOAD_KEY_ALIAS" \
-            -storepass:env NEW_KEYSTORE_PASSWORD \
-            -file generated-signing/upload_certificate.pem
+          SDK_PATH="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          test -n "$SDK_PATH"
+          printf 'sdk.dir=%s\n' "$SDK_PATH" > local.properties
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Prepare uploaded signing key for existing Gradle config
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          python3 docs/codemagic/prepare_signing.py
+      - name: Build signed release AAB
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:bundleRelease
+      - name: Verify AAB signature and native ABI
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          python3 docs/codemagic/verify_aab.py app/build/outputs/bundle/release/app-release.aab
     artifacts:
-      - generated-signing/*.jks
-      - generated-signing/upload_certificate.pem
+      - app/build/outputs/bundle/release/*.aab
+      - app/build/outputs/mapping/release/mapping.txt
+      - app/build/reports/lint-results-debug.html
+      - app/build/reports/tests/testDebugUnitTest/**
