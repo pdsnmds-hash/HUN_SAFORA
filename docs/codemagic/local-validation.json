@@ -1,0 +1,16 @@
+{
+  "local_checks": {
+    "java_properties_roundtrip_unicode_and_escapes": "passed",
+    "existing_private_files_not_overwritten": "passed",
+    "missing_ci_secrets_rejected": "passed",
+    "existing_signed_safora_aab_and_four_abi": "passed",
+    "unsigned_aab_rejected": "passed",
+    "one_time_generation_and_certificate_export": "passed"
+  },
+  "codemagic_cloud_run": false,
+  "existing_upload_key_replaced": false,
+  "yaml_and_shell_syntax": {
+    "codemagic.yaml": "passed",
+    "generate-upload-key.yaml": "passed"
+  }
+}

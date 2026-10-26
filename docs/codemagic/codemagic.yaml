@@ -1,0 +1,41 @@
+# Copy this file to codemagic.yaml in the repository root.
+# Also commit docs/codemagic/prepare_signing.py and verify_aab.py.
+workflows:
+  safora-aab:
+    name: Safora - Signed AAB
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      java: 17
+      android_signing:
+        - safora_upload
+    scripts:
+      - name: Configure Android SDK 36
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          SDK_PATH="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          test -n "$SDK_PATH"
+          printf 'sdk.dir=%s\n' "$SDK_PATH" > local.properties
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Prepare uploaded signing key for existing Gradle config
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          python3 docs/codemagic/prepare_signing.py
+      - name: Build signed release AAB
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:bundleRelease
+      - name: Verify AAB signature and native ABI
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          python3 docs/codemagic/verify_aab.py app/build/outputs/bundle/release/app-release.aab
+    artifacts:
+      - app/build/outputs/bundle/release/*.aab
+      - app/build/outputs/mapping/release/mapping.txt
+      - app/build/reports/lint-results-debug.html
+      - app/build/reports/tests/testDebugUnitTest/**

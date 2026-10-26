@@ -1,0 +1,15 @@
+<resources>
+    <color name="safora_splash_background">#17171E</color>
+    <style name="Theme.Safora" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/safora_splash_background</item>
+        <item name="android:statusBarColor">@color/safora_splash_background</item>
+        <item name="android:navigationBarColor">@color/safora_splash_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+    <style name="Theme.Safora.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/safora_splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/safora_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Safora</item>
+    </style>
+    <item name="safora_splash_overlay" type="id"/>
+</resources>

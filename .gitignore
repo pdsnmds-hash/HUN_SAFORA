@@ -1,0 +1,12 @@
+.gradle/
+.gradle-user/
+local.properties
+**/build/
+.idea/
+*.iml
+.DS_Store
+
+# Private upload signing material
+release/signing/
+*.jks
+*.keystore
