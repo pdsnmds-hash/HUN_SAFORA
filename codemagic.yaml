@@ -14,10 +14,20 @@ workflows:
         script: |
           set -eu
           cd "$CM_BUILD_DIR"
-          SDK_PATH="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
-          test -n "$SDK_PATH"
+          SDK_PATH="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/share/android-sdk}}"
+          SDKMANAGER=""
+          for candidate in "$SDK_PATH/cmdline-tools/latest/bin/sdkmanager" "$SDK_PATH"/cmdline-tools/*/bin/sdkmanager "$SDK_PATH/tools/bin/sdkmanager"; do
+            if [ -x "$candidate" ]; then
+              SDKMANAGER="$candidate"
+              break
+            fi
+          done
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager executable not found under Android SDK: $SDK_PATH" >&2
+            exit 1
+          fi
           printf 'sdk.dir=%s\n' "$SDK_PATH" > local.properties
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          "$SDKMANAGER" --sdk_root="$SDK_PATH" "platforms;android-36" "build-tools;36.0.0"
       - name: Prepare uploaded signing key for existing Gradle config
         script: |
           set -eu

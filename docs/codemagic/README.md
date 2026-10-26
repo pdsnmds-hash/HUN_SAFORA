@@ -254,6 +254,7 @@ environment:
 | Cannot recover key | Key password, а не только пароль контейнера |
 | Permission denied: ./gradlew | chmod +x gradlew; пример workflow уже делает это |
 | SDK location not found | Стадия настройки local.properties для CM машины |
+| sdkmanager: command not found | Использовать исправленный YAML: он находит sdkmanager внутри SDK и вызывает по полному пути |
 | SDK 36 не найден | Установка platforms;android-36 / build-tools;36.0.0 |
 | Version code already used | Увеличить versionCode и собрать заново |
 | Google Play ожидает другой сертификат | Выбран другой upload key; сравнить с Upload key certificate в Play Console, не генерировать новый вслепую |
